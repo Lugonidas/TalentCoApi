@@ -73,6 +73,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/{id}/enviar-mensaje', [ChatController::class, 'enviarMensaje']);
 });
 
+Route::options('/archivo-leccion', function () {
+    return response()->json([], 200);
+});
+
 // Rutas públicas
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/registrarse', [AuthController::class, 'store']);
@@ -84,3 +88,4 @@ Route::get('/lecciones/curso/{curso}', [LeccionController::class, 'showAllLesson
 /* Route::get('/phpinfo', function() {
     phpinfo();
 }); */
+/* Pruebas */
