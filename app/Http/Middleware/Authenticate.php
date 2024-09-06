@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 namespace App\Http\Middleware;
 
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
@@ -12,6 +11,12 @@ class Authenticate extends Middleware
      */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        if ($request->expectsJson()) {
+            // Retorna null para no redirigir y dejar que el manejo de errores se encargue de devolver una respuesta JSON adecuada.
+            return null;
+        }
+
+        // Redirigir a la ruta de login si la solicitud no espera JSON.
+        return route('login');
     }
 }

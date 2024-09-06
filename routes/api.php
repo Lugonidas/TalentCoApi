@@ -66,10 +66,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cursos/docente/{idDocente}', [CursoController::class, 'cursosDelDocente']);
     Route::get('/cursos/estudiante/{idEstudiante}', [CursoController::class, 'cursosDelEstudiante']);
     Route::apiResource('/lecciones', LeccionController::class);
+    Route::apiResource('/archivo-leccion', ArchivoLeccionController::class);
     Route::apiResource('/categorias', CategoriaController::class)->except(['index']);
     Route::apiResource('/comentarios', ComentarioController::class);
     Route::apiResource('/inscripcion', InscripcionController::class);
-    
+
     // Rutas del chat
     Route::get('/chat/usuarios-cursos', [ChatController::class, 'usuariosPorCursos']);
     Route::post('/chat/conversaciones/crear/{id}', [ChatController::class, 'obtenerOCrearConversacion']);
@@ -85,7 +86,6 @@ Route::get('/categorias', [CategoriaController::class, "index"]);
 Route::get('/cursos', [CursoController::class, 'index']);
 Route::get('/cursos/{curso}', [CursoController::class, 'show']);
 Route::get('/lecciones/curso/{curso}', [LeccionController::class, 'showAllLessons']);
-Route::apiResource('/archivo-leccion', ArchivoLeccionController::class);
 
 /* Route::get('/phpinfo', function() {
     phpinfo();
