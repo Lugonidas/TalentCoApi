@@ -33,6 +33,11 @@ Route::get('/test-log', function () {
     return 'Revisa el archivo de log';
 });
 
+
+Route::options('/archivo-leccion', function () {
+    return response()->json([], 200);
+});
+
 // Rutas para recursos protegidos por autenticación
 // Rutas para recursos protegidos por autenticación
 Route::middleware('auth:sanctum')->group(function () {
@@ -73,9 +78,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat/{id}/enviar-mensaje', [ChatController::class, 'enviarMensaje']);
 });
 
-Route::options('/archivo-leccion', function () {
-    return response()->json([], 200);
-});
 
 // Rutas públicas
 Route::post('/login', [AuthController::class, 'login']);
