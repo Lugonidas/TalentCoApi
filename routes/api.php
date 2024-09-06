@@ -66,25 +66,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cursos/docente/{idDocente}', [CursoController::class, 'cursosDelDocente']);
     Route::get('/cursos/estudiante/{idEstudiante}', [CursoController::class, 'cursosDelEstudiante']);
     Route::apiResource('/lecciones', LeccionController::class);
-    /*     Route::apiResource('/archivo-leccion', ArchivoLeccionController::class); */
-
-
-    // Ruta para obtener todos los archivos
-    Route::get('/archivo-leccion', [ArchivoLeccionController::class, 'index'])->name('archivo-leccion.index');
-
-    // Ruta para obtener archivos de una lección específica
-    Route::get('/archivo-leccion/{id}', [ArchivoLeccionController::class, 'show'])->name('archivo-leccion.show');
-
-    // Ruta para almacenar un nuevo archivo de lección
-    Route::post('/archivo-leccion', [ArchivoLeccionController::class, 'store'])->name('archivo-leccion.store');
-
-    // Ruta para eliminar un archivo de lección existente
-    Route::delete('/archivo-leccion/{id}', [ArchivoLeccionController::class, 'destroy'])->name('archivo-leccion.destroy');
-    
     Route::apiResource('/categorias', CategoriaController::class)->except(['index']);
     Route::apiResource('/comentarios', ComentarioController::class);
     Route::apiResource('/inscripcion', InscripcionController::class);
-
+    
     // Rutas del chat
     Route::get('/chat/usuarios-cursos', [ChatController::class, 'usuariosPorCursos']);
     Route::post('/chat/conversaciones/crear/{id}', [ChatController::class, 'obtenerOCrearConversacion']);
@@ -100,6 +85,7 @@ Route::get('/categorias', [CategoriaController::class, "index"]);
 Route::get('/cursos', [CursoController::class, 'index']);
 Route::get('/cursos/{curso}', [CursoController::class, 'show']);
 Route::get('/lecciones/curso/{curso}', [LeccionController::class, 'showAllLessons']);
+Route::apiResource('/archivo-leccion', ArchivoLeccionController::class);
 
 /* Route::get('/phpinfo', function() {
     phpinfo();
