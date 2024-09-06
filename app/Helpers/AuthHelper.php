@@ -8,22 +8,22 @@ class AuthHelper
 {
     public static function esAdmin()
     {
-        return Auth::check() && Auth::user()->id_rol === 1;
+        return Auth::check() && Auth::user()->id_rol == 1;
     }
 
     public static function esEstudiante()
     {
-        return Auth::check() && Auth::user()->id_rol === 2;
+        return Auth::check() && Auth::user()->id_rol == 2;
     }
 
     public static function esProfesor()
     {
-        return Auth::check() && Auth::user()->id_rol === 3;
+        return Auth::check() && Auth::user()->id_rol == 3;
     }
 
     public static function esProfesorDelCurso($idProfesorCurso)
     {
-        return Auth::check() && Auth::id() === $idProfesorCurso;
+        return Auth::check() && Auth::id() == $idProfesorCurso;
     }
 
     public static function esUsuarioActual($idUsuario)
