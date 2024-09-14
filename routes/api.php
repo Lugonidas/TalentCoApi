@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\ArchivoLeccionController;
 use App\Http\Controllers\ArchivoVistoController;
 use App\Http\Controllers\AuthController;
@@ -8,7 +9,6 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\ComentarioController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\InscripcionController;
-use App\Http\Controllers\JitsiController;
 use App\Http\Controllers\LeccionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('/verify-email/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
+
 // routes/web.php
 Route::get('/test-log', function () {
     Log::info('Esto es un mensaje de prueba de logging');
@@ -39,8 +41,7 @@ Route::options('/archivo-leccion', function () {
 });
 
 // Rutas para recursos protegidos por autenticación
-// Rutas para recursos protegidos por autenticación
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum', 'verified')->group(function () {
     Route::get('/user', function (Request $request) {
         return response()->json($request->user());
     });
@@ -77,6 +78,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chat/{id}', [ChatController::class, 'show']);
     Route::post('/chat/{id}/enviar-mensaje', [ChatController::class, 'enviarMensaje']);
 });
+
+
 
 
 // Rutas públicas

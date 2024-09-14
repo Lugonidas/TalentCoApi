@@ -71,13 +71,13 @@ class UserController extends Controller
     {
         try {
             $data = $request->validated();
-
+    
             // Manejar la carga de la imagen
             if ($request->hasFile('imagen')) {
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
             }
-
+    
             // Crear un nuevo usuario con los datos proporcionados
             $usuario = User::create([
                 'name' => $data['nombre'],
@@ -92,15 +92,15 @@ class UserController extends Controller
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
-
+    
             return response()->json([
-                'message' => 'Usuario registrado correctamente',
+                'message' => 'Usuario registrado correctamente. Por favor, verifica tu correo.',
                 'token' => $usuario->createToken("token")->plainTextToken,
                 'usuario' => $usuario
             ], 201);
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
-
+    
             return response()->json([
                 'message' => 'Error al registrar el usuario: ' . $e->getMessage(),
                 'errors' => $errors
@@ -111,6 +111,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+    
 
     /**
      * Actualizar un usuario existente.

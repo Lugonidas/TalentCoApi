@@ -4,13 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\LoginRequest;
+use App\Mail\RegistroUsuarioMailable;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -42,8 +46,18 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Autenticación exitosa, cargar información adicional del usuario
-        $usuario = Auth::user()->load('cursosEstudiante', 'comentarios', 'conversaciones.usuarios', 'conversaciones.participantes');
+        // Obtener el usuario autenticado
+        $usuario = Auth::user();
+
+        // Verificar si el correo electrónico del usuario está verificado
+        if (!$usuario->hasVerifiedEmail()) {
+            return response()->json([
+                'errors' => ['Debes verificar tu correo electrónico antes de iniciar sesión.']
+            ], 403); // Forbidden
+        }
+
+        // Cargar información adicional del usuario
+        $usuario->load('cursosEstudiante', 'comentarios', 'conversaciones.usuarios', 'conversaciones.participantes');
         $token = $usuario->createToken('Token')->plainTextToken;
 
         // Generar y retornar un token de acceso
@@ -52,6 +66,7 @@ class AuthController extends Controller
             'usuario' => $usuario
         ], 200);
     }
+
 
 
     /**
@@ -112,8 +127,19 @@ class AuthController extends Controller
                 'password' => Hash::make($data['password']),
             ]);
 
+            // Crear URL de verificación
+            $verificationUrl = URL::temporarySignedRoute(
+                'verification.verify', // Nombre de la ruta
+                Carbon::now()->addHours(24), // Tiempo de expiración
+                ['id' => $usuario->id, 'hash' => sha1($usuario->email)] // Parámetros de la ruta
+            );
+
+
+            // Enviar el correo de bienvenida
+            Mail::to($usuario->email)->send(new RegistroUsuarioMailable($usuario, $verificationUrl));
+
             return response()->json([
-                'message' => 'Usuario registrado correctamente',
+                'message' => 'Usuario registrado y correo de confirmación enviado exitosamente',
                 'token' => $usuario->createToken("token")->plainTextToken,
                 'usuario' => $usuario
             ], 201);
