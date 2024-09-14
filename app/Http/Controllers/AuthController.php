@@ -134,7 +134,6 @@ class AuthController extends Controller
                 ['id' => $usuario->id, 'hash' => sha1($usuario->email)] // Parámetros de la ruta
             );
 
-
             // Enviar el correo de bienvenida
             Mail::to($usuario->email)->send(new RegistroUsuarioMailable($usuario, $verificationUrl));
 

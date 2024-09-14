@@ -79,9 +79,6 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
     Route::post('/chat/{id}/enviar-mensaje', [ChatController::class, 'enviarMensaje']);
 });
 
-
-
-
 // Rutas públicas
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/registrarse', [AuthController::class, 'store']);
