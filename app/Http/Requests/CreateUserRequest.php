@@ -30,7 +30,7 @@ class CreateUserRequest extends FormRequest
             "fecha_nacimiento" => ["required", "string"],
             "direccion" => ["required", "string"],
             "email" => ["required", "email", "unique:users,email"],
-            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
             "password" => [
                 "required",
                 "confirmed",
