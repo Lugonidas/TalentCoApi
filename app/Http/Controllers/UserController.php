@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -24,8 +25,10 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         try {
-            // Obtener todos los usuarios con sus cursos relacionados
-            $usuarios = User::with('cursosEstudiante', 'rol', "conversaciones")->get();
+            // Almacenar en caché los usuarios por 60 minutos
+            $usuarios = Cache::remember('usuarios', 60, function () {
+                return User::with('cursosEstudiante', 'rol', 'conversaciones')->get();
+            });
 
             return response()->json([
                 'usuarios' => $usuarios,
@@ -37,6 +40,7 @@ class UserController extends Controller
         }
     }
 
+
     /**
      * Mostrar un usuario por su ID.
      *
@@ -46,8 +50,10 @@ class UserController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            // Buscar el usuario por su ID con sus cursos relacionados
-            $usuario = User::with("cursosEstudiante")->findOrFail($id);
+            // Usar el ID del usuario para crear una clave única
+            $usuario = Cache::remember("usuario_{$id}", 60, function () use ($id) {
+                return User::with('cursosEstudiante')->findOrFail($id);
+            });
 
             return response()->json([
                 'usuario' => $usuario
@@ -61,6 +67,7 @@ class UserController extends Controller
         }
     }
 
+
     /**
      * Registrar un nuevo usuario.
      *
@@ -71,13 +78,13 @@ class UserController extends Controller
     {
         try {
             $data = $request->validated();
-    
+
             // Manejar la carga de la imagen
             if ($request->hasFile('imagen')) {
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
             }
-    
+
             // Crear un nuevo usuario con los datos proporcionados
             $usuario = User::create([
                 'name' => $data['nombre'],
@@ -92,7 +99,7 @@ class UserController extends Controller
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
-    
+
             return response()->json([
                 'message' => 'Usuario registrado correctamente. Por favor, verifica tu correo.',
                 'token' => $usuario->createToken("token")->plainTextToken,
@@ -100,7 +107,7 @@ class UserController extends Controller
             ], 201);
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
-    
+
             return response()->json([
                 'message' => 'Error al registrar el usuario: ' . $e->getMessage(),
                 'errors' => $errors
@@ -111,7 +118,7 @@ class UserController extends Controller
             ], 500);
         }
     }
-    
+
 
     /**
      * Actualizar un usuario existente.
@@ -123,13 +130,9 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request, $id): JsonResponse
     {
         try {
-            // Buscar el usuario por su ID con sus cursos relacionados
             $usuario = User::with('cursosEstudiante')->findOrFail($id);
-
-            //Validar los datos proporcionados
             $data = $request->validated();
 
-            // Actualizar el usuario con los datos proporcionados
             $usuario->update([
                 'name' => $data['nombre'],
                 'apellido' => $data['apellido'],
@@ -142,8 +145,8 @@ class UserController extends Controller
                 'id_tipo_documento' => $data['id_tipo_documento']
             ]);
 
-            // Recargar el usuario con sus cursos actualizados
-            $usuario->refresh();
+            // Eliminar la caché del usuario actualizado
+            Cache::forget("usuario_{$id}");
 
             return response()->json([
                 'message' => 'Usuario actualizado correctamente',
@@ -153,7 +156,6 @@ class UserController extends Controller
             return response()->json(['message' => 'El usuario no existe'], 404);
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
-
             return response()->json([
                 'message' => 'Error al actualizar el usuario: ' . $e->getMessage(),
                 'errors' => $errors
@@ -174,11 +176,11 @@ class UserController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            // Buscar el usuario por su ID
             $usuario = User::findOrFail($id);
-
-            // Eliminar el usuario
             $usuario->delete();
+
+            // Eliminar la caché del usuario eliminado
+            Cache::forget("usuario_{$id}");
 
             return response()->json([
                 'message' => 'Usuario eliminado correctamente',
@@ -201,16 +203,18 @@ class UserController extends Controller
     public function buscarUsuarios(Request $request): JsonResponse
     {
         try {
-            // Obtener el término de búsqueda del parámetro "q" de la solicitud
-            $query = $request["busqueda"];
+            $query = $request->input('busqueda');
+            $cacheKey = "usuarios_busqueda_{$query}";
 
-            // Realizar la consulta para buscar usuarios que coincidan con el término de búsqueda
-            $usuarios = User::with('cursosEstudiante', 'rol')
-                ->where('name', 'like', "%$query%")
-                ->orWhere('apellido', 'like', "%$query%")
-                ->orWhere('usuario', 'like', "%$query%")
-                ->orWhere('email', 'like', "%$query%")
-                ->get();
+            // Usar caché para almacenar los resultados de búsqueda
+            $usuarios = Cache::remember($cacheKey, 60, function () use ($query) {
+                return User::with('cursosEstudiante', 'rol')
+                    ->where('name', 'like', "%$query%")
+                    ->orWhere('apellido', 'like', "%$query%")
+                    ->orWhere('usuario', 'like', "%$query%")
+                    ->orWhere('email', 'like', "%$query%")
+                    ->get();
+            });
 
             return response()->json([
                 'usuarios' => $usuarios,

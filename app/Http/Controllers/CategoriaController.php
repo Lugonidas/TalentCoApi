@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use App\Http\Requests\CreateCategoriaRequest;
 use App\Http\Requests\UpdateCategoriaRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Cache;
 
 class CategoriaController extends Controller
 {
@@ -19,7 +20,9 @@ class CategoriaController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $categorias = Categoria::with('cursos')->get();
+            $categorias = Cache::remember('categorias_all', 60, function () {
+                return Categoria::with('cursos')->get();
+            });
 
             return response()->json([
                 'categorias' => $categorias
@@ -30,10 +33,13 @@ class CategoriaController extends Controller
             ], 500);
         }
     }
+
     public function mostrarCategorias(): JsonResponse
     {
         try {
-            $categorias = Categoria::with('cursos')->get();
+            $categorias = Cache::remember('categorias_all', 60, function () {
+                return Categoria::with('cursos')->get();
+            });
 
             return response()->json([
                 'categorias' => $categorias
@@ -44,6 +50,7 @@ class CategoriaController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Almacenar una nueva categoría.
@@ -58,6 +65,9 @@ class CategoriaController extends Controller
 
             $categoria = Categoria::create($data);
 
+            // Limpiar caché si es necesario
+            Cache::forget('categorias_all');
+
             return response()->json([
                 'message' => 'Categoría creada correctamente',
                 'categoria' => $categoria,
@@ -69,6 +79,7 @@ class CategoriaController extends Controller
         }
     }
 
+
     /**
      * Mostrar una categoría por su ID.
      *
@@ -78,7 +89,9 @@ class CategoriaController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $categoria = Categoria::findOrFail($id);
+            $categoria = Cache::remember("categoria_{$id}", 60, function () use ($id) {
+                return Categoria::findOrFail($id);
+            });
 
             return response()->json([
                 'categoria' => $categoria
@@ -91,6 +104,7 @@ class CategoriaController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Actualizar una categoría existente.
@@ -108,6 +122,10 @@ class CategoriaController extends Controller
 
             $categoria->update($data);
 
+            // Limpiar caché si es necesario
+            Cache::forget("categoria_{$id}");
+            Cache::forget('categorias_all');
+
             return response()->json([
                 'message' => 'Categoría actualizada correctamente',
                 'categoria' => $categoria
@@ -121,6 +139,7 @@ class CategoriaController extends Controller
         }
     }
 
+
     /**
      * Eliminar una categoría existente.
      *
@@ -132,6 +151,10 @@ class CategoriaController extends Controller
         try {
             $categoria = Categoria::findOrFail($id);
             $categoria->delete();
+
+            // Limpiar caché si es necesario
+            Cache::forget("categoria_{$id}");
+            Cache::forget('categorias_all');
 
             return response()->json([
                 'message' => 'Categoría eliminada correctamente',

@@ -9,6 +9,7 @@ use App\Models\Leccion;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -22,7 +23,9 @@ class LeccionController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $lecciones = Leccion::with("curso", "archivos")->orderBy('created_at', 'desc')->get();
+            $lecciones = Cache::remember('lecciones_all', 60, function () {
+                return Leccion::with("curso", "archivos")->orderBy('created_at', 'desc')->get();
+            });
 
             return response()->json([
                 'lecciones' => $lecciones,
@@ -34,6 +37,7 @@ class LeccionController extends Controller
         }
     }
 
+
     /**
      * Mostrar una lección específica.
      *
@@ -43,7 +47,9 @@ class LeccionController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $leccion = Leccion::with('curso', 'archivos')->findOrFail($id);
+            $leccion = Cache::remember("leccion_{$id}", 60, function () use ($id) {
+                return Leccion::with('curso', 'archivos')->findOrFail($id);
+            });
 
             return response()->json([
                 'leccion' => $leccion
@@ -57,6 +63,7 @@ class LeccionController extends Controller
         }
     }
 
+
     /**
      * Mostrar todas las lecciones de un curso específico.
      *
@@ -66,7 +73,9 @@ class LeccionController extends Controller
     public function showAllLessons($cursoId): JsonResponse
     {
         try {
-            $curso = Curso::with('lecciones.archivos')->findOrFail($cursoId);
+            $curso = Cache::remember("curso_{$cursoId}_with_lecciones", 60, function () use ($cursoId) {
+                return Curso::with('lecciones.archivos')->findOrFail($cursoId);
+            });
 
             return response()->json([
                 'curso' => $curso,
@@ -81,6 +90,7 @@ class LeccionController extends Controller
         }
     }
 
+
     /**
      * Almacenar una nueva lección.
      *
@@ -92,13 +102,15 @@ class LeccionController extends Controller
         try {
             $data = $request->validated();
 
-            // Manejar la carga de la imagen
             if ($request->hasFile('imagen')) {
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
             }
 
             $leccion = Leccion::create($data);
+
+            // Limpiar caché si es necesario
+            Cache::forget('lecciones_all');
 
             return response()->json([
                 'message' => 'Lección agregada correctamente',
@@ -117,6 +129,7 @@ class LeccionController extends Controller
         }
     }
 
+
     /**
      * Actualizar una lección existente.
      *
@@ -129,23 +142,21 @@ class LeccionController extends Controller
         try {
             $leccion = Leccion::findOrFail($id);
 
-            // Validar los datos del request
             $data = $request->validated();
 
-            // Manejo de la imagen
             if ($request->hasFile('imagen')) {
-                // Eliminar la imagen anterior si existe
                 if ($leccion->imagen && Storage::disk('public')->exists($leccion->imagen)) {
                     Storage::disk('public')->delete($leccion->imagen);
                 }
 
-                // Guardar la nueva imagen
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
             }
 
-            // Actualizar los datos de la lección
             $leccion->update($data);
+
+            // Limpiar caché si es necesario
+            Cache::forget("leccion_{$id}");
 
             return response()->json([
                 'message' => 'Lección actualizada correctamente',
@@ -159,11 +170,10 @@ class LeccionController extends Controller
                 'message' => 'Error al actualizar la lección: ' . $e->getMessage(),
                 'errors' => $errors
             ], 422);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json(['message' => 'Error al actualizar la lección'], 500);
         }
     }
-
 
     /**
      * Eliminar una lección existente.
@@ -176,6 +186,10 @@ class LeccionController extends Controller
         try {
             $leccion = Leccion::findOrFail($id);
             $leccion->delete();
+
+            // Limpiar caché si es necesario
+            Cache::forget("leccion_{$id}");
+            Cache::forget('lecciones_all');
 
             return response()->json([
                 'message' => 'Lección eliminada correctamente',

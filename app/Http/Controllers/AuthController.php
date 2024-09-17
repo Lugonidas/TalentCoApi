@@ -129,7 +129,7 @@ class AuthController extends Controller
 
             // Crear URL de verificación
             $verificationUrl = URL::temporarySignedRoute(
-                'verification.verify', // Nombre de la ruta
+                'https://talentco.netlify.app/verify-email/', // Nombre de la ruta
                 Carbon::now()->addHours(24), // Tiempo de expiración
                 ['id' => $usuario->id, 'hash' => sha1($usuario->email)] // Parámetros de la ruta
             );

@@ -10,6 +10,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -24,28 +25,25 @@ class CursoController extends Controller
     public function index(): JsonResponse
     {
         try {
-            // Obtener todos los cursos con sus relaciones y ordenar las lecciones
-            $cursos = Curso::with([
-                'comentarios',
-                'comentarios.user',
-                'docente',
-                'lecciones' => function ($query) {
-                    $query->orderBy('orden', 'desc');
-                },
-                'categoria',
-                'estudiantes'
-            ])->orderBy('created_at', 'desc')
-                ->get();
+            $cursos = Cache::remember('cursos_all', 60, function () {
+                return Curso::with([
+                    'comentarios',
+                    'comentarios.user',
+                    'docente',
+                    'lecciones' => function ($query) {
+                        $query->orderBy('orden', 'desc');
+                    },
+                    'categoria',
+                    'estudiantes'
+                ])->orderBy('created_at', 'desc')->get();
+            });
 
-            return response()->json([
-                'cursos' => $cursos,
-            ]);
+            return response()->json(['cursos' => $cursos]);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los cursos: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener los cursos: ' . $e->getMessage()], 500);
         }
     }
+
 
     /**
      * Mostrar un curso por su ID.
@@ -56,21 +54,19 @@ class CursoController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            // Buscar el curso por su ID con sus relaciones
-            $curso = Curso::with('docente', 'lecciones.archivos', 'categoria', 'comentarios', 'comentarios.user', 'estudiantes')
-                ->findOrFail($id);
+            $curso = Cache::remember("curso_{$id}", 60, function () use ($id) {
+                return Curso::with('docente', 'lecciones.archivos', 'categoria', 'comentarios', 'comentarios.user', 'estudiantes')
+                    ->findOrFail($id);
+            });
 
-            return response()->json([
-                'curso' => $curso
-            ]);
+            return response()->json(['curso' => $curso]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'El curso no existe'], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener el curso: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener el curso: ' . $e->getMessage()], 500);
         }
     }
+
 
     /**
      * Registrar un nuevo curso.
@@ -134,30 +130,30 @@ class CursoController extends Controller
         try {
             // Buscar el curso
             $curso = Curso::findOrFail($id);
-            
+
             // Obtener los datos validados
             $data = $request->validated();
-    
+
             // Manejar la imagen si se proporciona
             if ($request->hasFile('imagen')) {
                 // Validar la imagen (si no está validada en UpdateCursoRequest)
                 $request->validate([
                     'imagen' => ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg", "max:4096"],
                 ]);
-    
+
                 // Eliminar la imagen anterior si existe
                 if ($curso->imagen && Storage::disk('public')->exists($curso->imagen)) {
                     Storage::disk('public')->delete($curso->imagen);
                 }
-    
+
                 // Guardar la nueva imagen
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
             }
-    
+
             // Actualizar el curso con los datos nuevos
             $curso->update($data);
-    
+
             return response()->json([
                 'message' => 'Curso actualizado correctamente',
                 'curso' => $curso
@@ -168,7 +164,7 @@ class CursoController extends Controller
             return response()->json(['error' => 'Error al actualizar el curso', 'details' => $e->getMessage()], 500);
         }
     }
-    
+
 
     /**
      * Eliminar un curso existente.
@@ -200,48 +196,39 @@ class CursoController extends Controller
         }
     }
 
-    public function cursosMasPopulares()
+    public function cursosMasPopulares(): JsonResponse
     {
         try {
-            // Obtener los cursos ordenados por el número de estudiantes en orden descendente
-            $cursosPopulares = Curso::with('docente', 'lecciones', 'categoria', 'comentarios')
-                ->withCount('estudiantes')
-                ->orderByDesc('estudiantes_count')
-                ->take(8)
-                ->get();
+            $cursosPopulares = Cache::remember('cursos_populares', 60, function () {
+                return Curso::with('docente', 'lecciones', 'categoria', 'comentarios')
+                    ->withCount('estudiantes')
+                    ->orderByDesc('estudiantes_count')
+                    ->take(8)
+                    ->get();
+            });
 
-
-            return response()->json([
-                'cursosPopulares' => $cursosPopulares,
-            ]);
+            return response()->json(['cursosPopulares' => $cursosPopulares]);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los cursos más populares: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener los cursos más populares: ' . $e->getMessage()], 500);
         }
     }
+
 
     public function cursosDelDocente($idDocente): JsonResponse
     {
         try {
-            // Buscar el docente por su ID
-            $docente = User::findOrFail($idDocente);
+            $cursos = Cache::remember("cursos_docente_{$idDocente}", 60, function () use ($idDocente) {
+                return Curso::where('id_docente', $idDocente)
+                    ->with("docente", "lecciones", "categoria", "comentarios", "estudiantes")
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            });
 
-            // Obtener todos los cursos del docente con sus relaciones
-            $cursos = Curso::where('id_docente', $idDocente)
-                ->with("docente", "lecciones", "categoria", "comentarios", "estudiantes")
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-            return response()->json([
-                'cursos' => $cursos,
-            ]);
+            return response()->json(['cursos' => $cursos]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'El docente no existe'], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los cursos del docente: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener los cursos del docente: ' . $e->getMessage()], 500);
         }
     }
 
@@ -254,40 +241,34 @@ class CursoController extends Controller
     public function cursosDelEstudiante($idEstudiante): JsonResponse
     {
         try {
-            // Buscar el estudiante por su ID
-            $estudiante = User::findOrFail($idEstudiante);
+            $cursos = Cache::remember("cursos_estudiante_{$idEstudiante}", 60, function () use ($idEstudiante) {
+                $estudiante = User::findOrFail($idEstudiante);
+                return $estudiante->cursosEstudiante()
+                    ->with('docente', 'lecciones', 'categoria', 'comentarios', 'estudiantes')
+                    ->get();
+            });
 
-            // Obtener todos los cursos del estudiante
-            $cursos = $estudiante->cursosEstudiante()->with('docente', 'lecciones', 'categoria', 'comentarios', 'estudiantes')->get();
-
-
-            return response()->json([
-                'cursos' => $cursos,
-            ]);
+            return response()->json(['cursos' => $cursos]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'El estudiante no existe'], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los cursos del estudiante: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener los cursos del estudiante: ' . $e->getMessage()], 500);
         }
     }
+
 
     public function mostrarCursos(): JsonResponse
     {
         try {
-            // Obtener todos los cursos con sus relaciones
-            $cursos = Curso::with("docente", "lecciones", "categoria", "comentarios", "comentarios.user", "estudiantes")
-                ->orderBy('created_at', 'desc')
-                ->get();
+            $cursos = Cache::remember('cursos_all_detailed', 60, function () {
+                return Curso::with("docente", "lecciones", "categoria", "comentarios", "comentarios.user", "estudiantes")
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+            });
 
-            return response()->json([
-                'cursos' => $cursos,
-            ]);
+            return response()->json(['cursos' => $cursos]);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Error al obtener los cursos: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener los cursos: ' . $e->getMessage()], 500);
         }
     }
 }
