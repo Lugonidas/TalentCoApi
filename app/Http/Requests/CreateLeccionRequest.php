@@ -1,4 +1,4 @@
-<?php
+<?php 
 
 namespace App\Http\Requests;
 
@@ -35,7 +35,7 @@ class CreateLeccionRequest extends FormRequest
                     return $query->where('id_curso', $this->input('id_curso'));
                 })
             ],
-            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
             "id_docente" => ["nullable", "exists:users,id"],
             "id_curso" => ["nullable", "exists:cursos,id"],
         ];
@@ -57,8 +57,11 @@ class CreateLeccionRequest extends FormRequest
             "estado.boolean" => "El estado de la lección debe ser verdadero o falso.",
             "orden.required" => "El orden de la lección es obligatorio.",
             "orden.numeric" => "El orden de la lección debe ser un valor numérico.",
+            "orden.unique" => "El orden de la lección ya ha sido asignado para este curso.",
             "imagen.required" => "La imagen de la lección es obligatoria.",
-            "imagen.string" => "La imagen de la lección debe ser una cadena de caracteres.",
+            "imagen.image" => "El archivo debe ser una imagen válida.",
+            "imagen.mimes" => "La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.",
+            "imagen.max" => "La imagen no debe superar los 4MB.",
             "id_docente.exists" => "El ID del docente proporcionado no existe.",
             "id_curso.exists" => "El ID del curso proporcionado no existe.",
         ];

@@ -52,13 +52,17 @@ class CreateCursoRequest extends FormRequest
             'estado.required' => 'El estado del curso es obligatorio.',
             'estado.boolean' => 'El estado del curso debe ser verdadero o falso.',
             'imagen.required' => 'La imagen del curso es obligatoria.',
-            'imagen.string' => 'La imagen del curso debe ser una cadena de caracteres.',
+            'imagen.image' => 'El archivo debe ser una imagen válida.',
+            'imagen.mimes' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.',
+            'imagen.max' => 'La imagen no debe superar los 4096KB.',
             'descripcion.required' => 'La descripción del curso es obligatoria.',
             'descripcion.string' => 'La descripción del curso debe ser una cadena de caracteres.',
             'duracion.required' => 'La duración del curso es obligatoria.',
             'duracion.numeric' => 'La duración del curso debe ser un valor numérico.',
             'duracion.min' => 'La duración del curso debe ser al menos 1.',
+            'id_docente.required' => 'El campo del docente es obligatorio.',
             'id_docente.exists' => 'El docente seleccionado no existe.',
+            'id_categoria.required' => 'El campo de la categoría es obligatorio.',
             'id_categoria.exists' => 'La categoría seleccionada no existe.',
         ];
     }
