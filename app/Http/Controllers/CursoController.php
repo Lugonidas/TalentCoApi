@@ -54,6 +54,7 @@ class CursoController extends Controller
     public function show($id): JsonResponse
     {
         try {
+            Cache::forget('cursos_all');
             $curso = Cache::remember("curso_{$id}", 60, function () use ($id) {
                 return Curso::with('docente', 'lecciones.archivos', 'categoria', 'comentarios', 'comentarios.user', 'estudiantes')
                     ->findOrFail($id);
