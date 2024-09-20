@@ -111,6 +111,7 @@ class LeccionController extends Controller
 
             // Limpiar caché si es necesario
             Cache::forget('lecciones_all');
+            Cache::forget('cursos_all');
 
             return response()->json([
                 'message' => 'Lección agregada correctamente',

@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Curso;
 use App\Http\Requests\CreateCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
-use App\Models\CursoEstudiante;
+use App\Models\Inscripcion;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -99,6 +99,8 @@ class CursoController extends Controller
                 'id_docente' => $data['id_docente'],
                 'id_categoria' => $data['id_categoria'],
             ]);
+            
+            Cache::forget('cursos_all');
 
             return response()->json([
                 'message' => 'Curso agregado correctamente',
@@ -154,6 +156,9 @@ class CursoController extends Controller
             // Actualizar el curso con los datos nuevos
             $curso->update($data);
 
+            // Invalidar la caché después de actualizar el curso
+            Cache::forget('cursos_all');
+
             return response()->json([
                 'message' => 'Curso actualizado correctamente',
                 'curso' => $curso
@@ -179,7 +184,7 @@ class CursoController extends Controller
             $curso = Curso::findOrFail($id);
 
             // Eliminar la relación en curso_estudiante
-            CursoEstudiante::where('id_curso', $id)->delete();
+            Inscripcion::where('id_curso', $id)->delete();
 
             // Eliminar el curso
             $curso->delete();

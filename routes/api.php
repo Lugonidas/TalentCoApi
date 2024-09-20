@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RespuestaEstudianteController;
 use App\Http\Controllers\VerificationController;
 use App\Http\Controllers\ArchivoLeccionController;
 use App\Http\Controllers\ArchivoVistoController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\ComentarioController;
 use App\Http\Controllers\CursoController;
 use App\Http\Controllers\InscripcionController;
 use App\Http\Controllers\LeccionController;
+use App\Http\Controllers\TareaController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;;
@@ -27,13 +29,15 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/verify-email/{id}/{hash}', [VerificationController::class, 'verify'])->name('verification.verify');
 
 // routes/web.php
-Route::get('/test-log', function () {
+/* Route::get('/test-log', function () {
     Log::info('Esto es un mensaje de prueba de logging');
     return 'Revisa el archivo de log';
 });
+ */
+
+Route::get('/verify/{id}/{hash}', [VerificationController::class, 'verify']);
 
 
 Route::options('/archivo-leccion', function () {
@@ -46,8 +50,12 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
         return response()->json($request->user());
     });
 
+    Route::apiResource('/tareas', TareaController::class);
+    Route::get('tareas/curso/{cursoId}', [TareaController::class, 'getTareasByCurso']);
+    Route::apiResource('/respuestas', RespuestaEstudianteController::class);
+
     // Rutas relacionadas con archivos y progreso de cursos
-    Route::get('archivos/{userId}/{archivoId}/visto', [ArchivoVistoController::class, 'hasViewedArchivo']);
+    Route::get('/archivos/{userId}/{archivoId}/visto', [ArchivoVistoController::class, 'hasViewedArchivo']);
     Route::post('/archivos/{id}/visto', [ArchivoVistoController::class, 'registrarVisto']);
     Route::get('/archivos/vistos', [ArchivoVistoController::class, 'archivosVistos']);
     Route::get('/lecciones/{id}/progreso', [ArchivoVistoController::class, 'progresoLeccion']);

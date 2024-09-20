@@ -2,9 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class VerificationController extends Controller
 {
@@ -17,17 +16,14 @@ class VerificationController extends Controller
             return response()->json(['message' => 'Verificación fallida'], 400);
         }
 
-        // Verificar si el enlace no ha expirado
-        if (!$request->hasValidSignature()) {
-            return response()->json(['message' => 'El enlace de verificación ha expirado'], 400);
+        // Verificar si el correo electrónico ya ha sido verificado
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'El correo ya ha sido verificado'], 200);
         }
 
-        // Verificar el correo electrónico
-        if (!$user->hasVerifiedEmail()) {
-            $user->email_verified_at = now();
-            $user->save();
-        }
+        // Marcar el correo como verificado
+        $user->markEmailAsVerified();
 
-        return response()->json(['message' => 'Correo verificado']);
+        return response()->json(['message' => 'Correo verificado exitosamente'], 200);
     }
 }

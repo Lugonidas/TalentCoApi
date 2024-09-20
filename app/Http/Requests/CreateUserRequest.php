@@ -22,7 +22,8 @@ class CreateUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+
+        $rules = [
             "nombre" => ["required", "string"],
             "apellido" => ["required", "string"],
             "numero_documento" => ["required", "string", "unique:users,numero_documento", "regex:/^\d{8}(?:\d{2})?$/"],
@@ -30,7 +31,6 @@ class CreateUserRequest extends FormRequest
             "fecha_nacimiento" => ["required", "string"],
             "direccion" => ["required", "string"],
             "email" => ["required", "email", "unique:users,email"],
-            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
             "password" => [
                 "required",
                 "confirmed",
@@ -39,6 +39,13 @@ class CreateUserRequest extends FormRequest
             "id_tipo_documento" => ["required", "exists:tipo_documentos,id"],
             "id_rol" => ["required", "exists:roles,id"],
         ];
+
+        // Validar imagen solo si se proporciona una nueva
+        if ($this->hasFile('imagen')) {
+            $rules['imagen'] = ["required", "image", "mimes:jpeg,png,jpg,gif,svg", "max:4096"];
+        }
+
+        return $rules;
     }
 
     public function messages(): array
@@ -56,7 +63,6 @@ class CreateUserRequest extends FormRequest
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'Debe ser una dirección de correo electrónico válida.',
             'email.unique' => 'El correo electrónico ya está en uso.',
-            'imagen.required' => 'La imagen es obligatoria.',
             'imagen.image' => 'El archivo debe ser una imagen.',
             'imagen.mimes' => 'La imagen debe ser de tipo: jpeg, png, jpg, gif, svg.',
             'imagen.max' => 'La imagen no debe ser mayor de 2048 KB.',

@@ -6,6 +6,7 @@ use App\Helpers\AuthHelper;
 use App\Http\Requests\CreateInscripcionRequest;
 use App\Http\Requests\UpdateInscripcionRequest;
 use App\Models\CursoEstudiante;
+use App\Models\Inscripcion;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -23,7 +24,7 @@ class InscripcionController extends Controller
     {
         try {
             // Obtener todas las inscripciones
-            $inscripciones = CursoEstudiante::all();
+            $inscripciones = Inscripcion::all();
 
             return response()->json([
                 'inscripciones' => $inscripciones
@@ -47,14 +48,14 @@ class InscripcionController extends Controller
             $data = $request->validated();
 
             // Verificar si el usuario ya está inscrito en el curso
-            if (CursoEstudiante::where('id_estudiante', $data['id_estudiante'])->where('id_curso', $data['id_curso'])->exists()) {
+            if (Inscripcion::where('id_estudiante', $data['id_estudiante'])->where('id_curso', $data['id_curso'])->exists()) {
                 return response()->json([
                     'message' => 'El estudiante ya está inscrito en este curso.'
                 ], 422);
             }
 
             // Crear una nueva inscripción con los datos proporcionados
-            $cursoEstudiante = CursoEstudiante::create([
+            $cursoEstudiante = Inscripcion::create([
                 'id_estudiante' => $data['id_estudiante'],
                 'id_curso' => $data['id_curso'],
                 'estado' => $data['estado'],
@@ -91,7 +92,7 @@ class InscripcionController extends Controller
     {
         try {
             // Buscar la inscripción por su ID
-            $inscripcion = CursoEstudiante::findOrFail($id);
+            $inscripcion = Inscripcion::findOrFail($id);
 
             return response()->json([
                 'inscripcion' => $inscripcion
@@ -119,7 +120,7 @@ class InscripcionController extends Controller
             ], 422);
         }
         try {
-            $inscripcion = CursoEstudiante::findOrFail($id);
+            $inscripcion = Inscripcion::findOrFail($id);
 
             // Verificar si el usuario es el propietario de la inscripción
             if (!AuthHelper::estaUsuarioInscritoEnCurso($inscripcion->id_estudiante)) {
@@ -165,7 +166,7 @@ class InscripcionController extends Controller
         }
 
         try {
-            $inscripcion = CursoEstudiante::findOrFail($id);
+            $inscripcion = Inscripcion::findOrFail($id);
 
             // Verificar si el usuario es el propietario de la inscripción
             if (!AuthHelper::estaUsuarioInscritoEnCurso($inscripcion->id_estudiante)) {

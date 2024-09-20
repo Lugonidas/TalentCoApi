@@ -105,13 +105,16 @@ class AuthController extends Controller
     {
         try {
             $data = $request->validated();
-
+    
             // Manejar la carga de la imagen
             if ($request->hasFile('imagen')) {
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
+            } else {
+                // Asignar una imagen por defecto si no se subió ninguna
+                $data['imagen'] = 'imagenes/avatar.png'; // Ruta de la imagen por defecto
             }
-
+    
             // Crear un nuevo usuario con los datos proporcionados
             $usuario = User::create([
                 'name' => $data['nombre'],
@@ -122,21 +125,18 @@ class AuthController extends Controller
                 'direccion' => $data['direccion'],
                 'id_tipo_documento' => $data['id_tipo_documento'],
                 'id_rol' => $data['id_rol'],
-                'imagen' => $data["imagen"],
+                'imagen' => $data['imagen'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
-
-            // Crear URL de verificación
-            $verificationUrl = URL::temporarySignedRoute(
-                'https://talentco.netlify.app/verify-email/', // Nombre de la ruta
-                Carbon::now()->addHours(24), // Tiempo de expiración
-                ['id' => $usuario->id, 'hash' => sha1($usuario->email)] // Parámetros de la ruta
-            );
-
-            // Enviar el correo de bienvenida
+    
+            // Construir la URL de verificación usando la URL del frontend
+            $frontendUrl = config('app.frontend_url');
+            $verificationUrl = "{$frontendUrl}/verify/{$usuario->id}/" . sha1($usuario->email);
+    
+            // Enviar el correo de bienvenida con la URL del frontend
             Mail::to($usuario->email)->send(new RegistroUsuarioMailable($usuario, $verificationUrl));
-
+    
             return response()->json([
                 'message' => 'Usuario registrado y correo de confirmación enviado exitosamente',
                 'token' => $usuario->createToken("token")->plainTextToken,
@@ -144,7 +144,7 @@ class AuthController extends Controller
             ], 201);
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
-
+    
             return response()->json([
                 'message' => 'Error al registrar el usuario: ' . $e->getMessage(),
                 'errors' => $errors
@@ -155,4 +155,5 @@ class AuthController extends Controller
             ], 500);
         }
     }
+    
 }

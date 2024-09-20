@@ -79,10 +79,14 @@ class UserController extends Controller
         try {
             $data = $request->validated();
 
-            // Manejar la carga de la imagen
+            // Verificar si se subió una imagen
             if ($request->hasFile('imagen')) {
+                // Almacenar la imagen en la carpeta 'imagenes' del almacenamiento público
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
+            } else {
+                // Asignar una imagen por defecto si no se subió ninguna
+                $data['imagen'] = 'imagenes/avatar.png'; // Ruta de la imagen por defecto
             }
 
             // Crear un nuevo usuario con los datos proporcionados
@@ -95,7 +99,7 @@ class UserController extends Controller
                 'direccion' => $data['direccion'],
                 'id_tipo_documento' => $data['id_tipo_documento'],
                 'id_rol' => $data['id_rol'],
-                'imagen' => $data["imagen"],
+                'imagen' => $data['imagen'], // Imagen ya sea subida o por defecto
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
@@ -118,6 +122,7 @@ class UserController extends Controller
             ], 500);
         }
     }
+
 
 
     /**
