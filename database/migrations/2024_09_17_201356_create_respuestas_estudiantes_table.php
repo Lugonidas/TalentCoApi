@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('id_estudiante')->constrained('users'); // Relación con el estudiante (users o estudiantes)
             $table->string('archivo')->nullable(); // Archivo de la respuesta (si es un archivo)
             $table->text('texto_respuesta')->nullable(); // Respuesta en texto (si es respuesta escrita)
-            $table->timestamp('fecha_entrega')->nullable(); // Fecha de entrega de la respuesta
+            $table->date('fecha_entrega')->nullable(); // Fecha de entrega de la respuesta
             $table->timestamps();
         });
     }

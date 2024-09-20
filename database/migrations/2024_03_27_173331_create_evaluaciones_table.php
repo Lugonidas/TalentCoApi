@@ -21,8 +21,8 @@ return new class extends Migration
             $table->string('titulo')->nullable(false);
             $table->string('descripcion')->nullable(false);
             $table->string('nota_maxima')->nullable(false);
-            $table->timestamp('fecha_inicio')->nullable(false);
-            $table->timestamp('fecha_fin')->nullable(false);
+            $table->date('fecha_inicio')->nullable(false);
+            $table->date('fecha_fin')->nullable(false);
             $table->boolean('estado')->nullable(false);;
             $table->timestamps();
             $table->softDeletes();
