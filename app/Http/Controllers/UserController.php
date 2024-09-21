@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateUserRequest;
+use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
@@ -13,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -276,6 +278,42 @@ class UserController extends Controller
             return response()->json([
                 'message' => 'Error al actualizar el usuario: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function updatePassword(UpdatePasswordRequest $request, $id): JsonResponse
+    {
+        Log::info("Desde actualizar contraseña",  [$request->all()]);
+        try {
+            $usuario = User::findOrFail($id);
+
+            // Validar la solicitud
+            $request->validated();
+
+            // Verificar si la nueva contraseña es diferente a la actual
+            if (Hash::check($request->password, $usuario->password)) {
+                return response()->json(['message' => 'La nueva contraseña no puede ser igual a la contraseña actual.'], 422);
+            }
+
+            // Verificar la contraseña actual
+            if (!Hash::check($request->password_actual, $usuario->password)) {
+                return response()->json(['message' => 'La contraseña actual no es válida.'], 422);
+            }
+
+            // Actualizar la contraseña
+            $usuario->update(['password' => Hash::make($request->password)]);
+
+            return response()->json(['message' => 'Contraseña actualizada correctamente.']);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'El usuario no existe.'], 404);
+        } catch (ValidationException $e) {
+            $errors = $e->validator->errors()->all();
+            return response()->json([
+                'message' => 'Error de validación.',
+                'errors' => $errors,
+            ], 422);
+        } catch (Exception $e) {
+            return response()->json(['message' => 'Error al actualizar la contraseña: ' . $e->getMessage()], 500);
         }
     }
 }

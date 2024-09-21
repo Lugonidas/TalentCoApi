@@ -50,25 +50,27 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
         return response()->json($request->user());
     });
 
+    
     Route::apiResource('/tareas', TareaController::class);
     Route::get('tareas/curso/{cursoId}', [TareaController::class, 'getTareasByCurso']);
     Route::apiResource('/respuestas', RespuestaEstudianteController::class);
-
+    
     // Rutas relacionadas con archivos y progreso de cursos
     Route::get('/archivos/{userId}/{archivoId}/visto', [ArchivoVistoController::class, 'hasViewedArchivo']);
     Route::post('/archivos/{id}/visto', [ArchivoVistoController::class, 'registrarVisto']);
     Route::get('/archivos/vistos', [ArchivoVistoController::class, 'archivosVistos']);
     Route::get('/lecciones/{id}/progreso', [ArchivoVistoController::class, 'progresoLeccion']);
     Route::get('/cursos/{id}/progreso', [ArchivoVistoController::class, 'progresoCurso']);
-
+    
     // Rutas de autenticación
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    
     // Rutas de usuarios
     Route::apiResource('/usuarios', UserController::class);
     Route::put('/usuarios/perfil/{id}', [UserController::class, "updateProfile"]);
+    Route::put('/usuarios/{id}/update-password', [UserController::class, 'updatePassword']);
     Route::post('/usuarios/buscar', [UserController::class, "buscarUsuarios"]);
-
+    
     // Rutas de cursos y lecciones
     Route::apiResource('/cursos', CursoController::class)->except(['index', "show"]);
     Route::get('/cursos-populares', [CursoController::class, "cursosMasPopulares"]);

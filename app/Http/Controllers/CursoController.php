@@ -51,14 +51,12 @@ class CursoController extends Controller
      * @param  int  $id
      * @return JsonResponse
      */
+
     public function show($id): JsonResponse
     {
         try {
-            Cache::forget(`curso_{$id}`);
-            $curso = Cache::remember("curso_{$id}", 60, function () use ($id) {
-                return Curso::with('docente', 'lecciones.archivos', 'categoria', 'comentarios', 'comentarios.user', 'estudiantes')
-                    ->findOrFail($id);
-            });
+            $curso = Curso::with('docente', 'lecciones.archivos', 'categoria', 'comentarios', 'comentarios.user', 'estudiantes')
+                ->findOrFail($id);
 
             return response()->json(['curso' => $curso]);
         } catch (ModelNotFoundException $e) {
@@ -67,6 +65,7 @@ class CursoController extends Controller
             return response()->json(['message' => 'Error al obtener el curso: ' . $e->getMessage()], 500);
         }
     }
+
 
 
     /**
@@ -100,7 +99,7 @@ class CursoController extends Controller
                 'id_docente' => $data['id_docente'],
                 'id_categoria' => $data['id_categoria'],
             ]);
-            
+
             Cache::forget('cursos_all');
 
             return response()->json([
