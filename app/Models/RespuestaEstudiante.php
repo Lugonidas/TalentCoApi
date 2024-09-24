@@ -32,4 +32,11 @@ class RespuestaEstudiante extends Model
     {
         return $this->belongsTo(User::class, 'id_estudiante');
     }
+
+    public function nota()
+    {
+        return $this->hasOne(NotasEstudiantes::class, 'id_estudiante', 'id_estudiante')
+                    ->whereColumn('id_evaluacion', 'id_evaluacion'); 
+    }
+    
 }

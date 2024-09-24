@@ -16,4 +16,16 @@ class NotasEstudiantes extends Model
         'id_estudiante',
         'nota',
     ];
+
+
+    public function estudiante()
+    {
+        return $this->belongsTo(User::class, 'id_estudiante');
+    }
+    
+    public function tarea()
+    {
+        return $this->belongsTo(Tarea::class, 'id_evaluacion');
+    }
+    
 }

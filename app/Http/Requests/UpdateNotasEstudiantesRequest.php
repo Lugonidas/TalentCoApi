@@ -24,11 +24,24 @@ class UpdateNotasEstudiantesRequest extends FormRequest
     public function rules()
     {
         return [
-        "evaluacion_id" => ["required", "string", "nullable" ],
-        "estudiante_id" => ["required", "string","nullable" ],
-        "nota" => ["required", "string","nullable"],
-            
+            "id_evaluacion" => ["required", "exists:evaluaciones,id"],
+            "id_estudiante" => ["required", "exists:users,id"],
+            "nota" => ["required", "string"],
+        ];
+    }
 
+    /**
+     * Custom error messages for validation rules.
+     *
+     * @return array<string, string>
+     */
+    public function messages()
+    {
+        return [
+            'id_evaluacion.required' => 'La evaluación es obligatoria.',
+            'id_estudiante.required' => 'El estudiante es obligatorio.',
+            'nota.required' => 'La nota es obligatoria.',
+            'nota.string' => 'La nota debe ser una cadena de texto.',
         ];
     }
 }

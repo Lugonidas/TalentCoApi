@@ -6,9 +6,11 @@ use App\Http\Requests\UpdateNotasEstudiantesRequest;
 use App\Http\Requests\CreateNotasEstudiantesRequest;
 use App\Http\Controllers\Controller;
 use App\Models\NotasEstudiantes;
+use App\Models\Tarea;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class NotasEstudiantesController extends Controller
@@ -23,7 +25,7 @@ class NotasEstudiantesController extends Controller
         try {
             // Obtener todas las notas de estudiantes
             $notasEstudiantes = NotasEstudiantes::all();
-         
+
             // Devolver la respuesta JSON con las notas de estudiantes
             return response()->json([
                 'notas' => $notasEstudiantes
@@ -69,17 +71,24 @@ class NotasEstudiantesController extends Controller
     {
         try {
             $data = $request->validated();
-          
-            $notasEstudiantes = NotasEstudiantes::create([
-                'evaluacion_id' => $data['evaluacion_id'],
-                'estudiante_id' => $data['estudiante_id'],
+
+            // Verificar si la evaluación existe
+            $evaluacion = Tarea::find($data['id_evaluacion']);
+
+            if (!$evaluacion) {
+                // Si no existe, puedes lanzar una excepción o devolver una respuesta de error
+                return response()->json(['error' => 'La evaluación no existe.'], 404);
+            }
+
+            $nota = NotasEstudiantes::create([
+                'id_evaluacion' => $data['id_evaluacion'],
+                'id_estudiante' => $data['id_estudiante'],
                 'nota' => $data['nota'],
             ]);
 
             return response()->json([
                 'message' => 'Nota registrada correctamente',
-                'token' => $notasEstudiantes->createToken("token")->plainTextToken,
-                'comentario' => $notasEstudiantes
+                'nota' => $nota
             ], 201); // Código de estado HTTP 201 para indicar éxito en la creación
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
@@ -93,9 +102,7 @@ class NotasEstudiantesController extends Controller
             return response()->json([
                 'message' => 'Error al registrar la nota: ' . $e->getMessage()
             ], 500); // Código de estado HTTP 500 para indicar un error del servidor
-        } 
-      
-
+        }
     }
 
     /**
@@ -105,41 +112,39 @@ class NotasEstudiantesController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(UpdateNotasEstudiantesRequest $request, $id): JsonResponse
+    public function update(UpdateNotasEstudiantesRequest $request): JsonResponse
     {
         try {
-            
-            $notasEstudiantes = NotasEstudiantes::findOrFail($id);
- 
+            // Validar los datos del request
             $data = $request->validated();
- 
-            
-            $notasEstudiantes->update([
-                'evaluacion_id' => $data['evaluacion_id'],
-                'estudiante_id' => $data['estudiante_id'],
-                'nota' => $data['nota'],
-        
-            ]);
- 
-            return response()->json([
-                'message' => 'nota registrado correctamente',
-                'token' => $notasEstudiantes->createToken("token")->plainTextToken,
-                'evaluacion' => $notasEstudiantes
-            ], 201); // Código de estado HTTP 201 para indicar éxito en la creación
 
-           
+            // Buscar la nota específica usando id_evaluacion y id_estudiante
+            $notasEstudiantes = NotasEstudiantes::where('id_evaluacion', $data['id_evaluacion'])
+                ->where('id_estudiante', $data['id_estudiante'])
+                ->firstOrFail();
+
+            // Actualizar solo la nota
+            $notasEstudiantes->update([
+                'nota' => $data['nota'], // Solo actualizamos la nota
+            ]);
+
+            return response()->json([
+                'message' => 'Nota actualizada correctamente',
+                'evaluacion' => $notasEstudiantes
+            ], 200); // Código de estado HTTP 200 para indicar éxito en la actualización
+
         } catch (ModelNotFoundException $e) {
-            return response()->json(['message' => 'la nota no existe'], 404);
+            return response()->json(['message' => 'La nota no existe'], 404);
         } catch (ValidationException $e) {
             $errors = $e->validator->errors()->all();
-            // En caso de error, devolver una respuesta JSON con un mensaje de error
             return response()->json([
                 'message' => 'Error al actualizar la nota: ' . $e->getMessage(),
                 'errors' => $errors
             ], 422);
         }
-
     }
+
+
 
     /**
      * Remove the specified resource from storage.
@@ -151,17 +156,17 @@ class NotasEstudiantesController extends Controller
     {
         try {
             // Encuentra el usuario por su ID
-           $notasEstudiantes = NotasEstudiantes::findOrFail($id);
+            $notasEstudiantes = NotasEstudiantes::findOrFail($id);
             // Verificar si el usuario existe
             if (!$notasEstudiantes) {
                 return response()->json([
                     'message' => 'la evaluacion no existe'
                 ], 404); // Código de estado HTTP 404 para indicar que el recurso no se encontró
             }
- 
+
             // Si el usuario existe, intentar eliminarlo
             $notasEstudiantes->delete();
- 
+
             return response()->json([
                 'message' => 'Evaluacion eliminada correctamente',
             ]);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CreateRespuestaRequest;
 use App\Models\RespuestaEstudiante;
+use App\Models\Tarea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +18,7 @@ class RespuestaEstudianteController extends Controller
      * @param int $tareaId
      * @return JsonResponse
      */
-    /*     public function index($tareaId)
+        public function index($tareaId)
     {
         // Obtener la evaluación con las respuestas y los estudiantes que respondieron
         $tarea = Tarea::with('respuestas.estudiante')->findOrFail($tareaId);
@@ -26,30 +27,37 @@ class RespuestaEstudianteController extends Controller
             'tarea' => $tarea,
             'message' => 'Respuestas obtenidas con éxito'
         ], 200);
-    } */
+    }
 
     public function store(CreateRespuestaRequest $request): JsonResponse
     {
         try {
+            // Validar los datos recibidos del request
             $data = $request->validated();
 
+            // Verificar si la evaluación existe
+            $evaluacion = Tarea::findOrFail($data['id_evaluacion']);
 
+            if (!$evaluacion) {
+                // Si no existe, puedes lanzar una excepción o devolver una respuesta de error
+                return response()->json(['error' => 'La evaluación no existe.'], 404);
+            }
+
+            // Si existe, procesar el archivo si es que se envió
             if ($request->hasFile('archivo')) {
                 // Solo guarda la ruta del archivo
                 $archivoPath = $request->file('archivo')->store('respuestas', 'public');
-                $data['archivo'] = $archivoPath;  // Asegúrate de que esta línea esté guardando la ruta
+                $data['archivo'] = $archivoPath;
             }
 
             // Crear la nueva respuesta
-            $respuesta = RespuestaEstudiante::create(
-                [
-                    "id_evaluacion" => $data["id_evaluacion"],
-                    "id_estudiante" => $data["id_estudiante"],
-                    "archivo" => $data["archivo"],
-                    "texto_respuesta" => $data["texto_respuesta"],
-                    "fecha_entrega" => now()
-                ]
-            );
+            $respuesta = RespuestaEstudiante::create([
+                "id_evaluacion" => $data["id_evaluacion"],
+                "id_estudiante" => $data["id_estudiante"],
+                "archivo" => $data["archivo"] ?? null, // Asignar null si no se envió archivo
+                "texto_respuesta" => $data["texto_respuesta"],
+                "fecha_entrega" => now()
+            ]);
 
             return response()->json([
                 'respuesta' => $respuesta,

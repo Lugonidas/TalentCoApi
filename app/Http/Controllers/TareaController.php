@@ -38,22 +38,21 @@ class TareaController extends Controller
     public function show($id): JsonResponse
     {
         try {
-
-            $tareas = Tarea::findOrFail($id);
+            $tarea = Tarea::with(['respuestas.estudiante', 'respuestas.nota' => function ($query) use ($id) {
+                $query->where('id_evaluacion', $id); // Aquí filtras por la evaluación correspondiente
+            }])->findOrFail($id);
 
             return response()->json([
-                'tareas' => $tareas
+                'tarea' => $tarea
             ]);
         } catch (ModelNotFoundException $e) {
-
-            return response()->json(['message' => 'la tarea no existe'], 404);
+            return response()->json(['message' => 'La tarea no existe'], 404);
         } catch (Exception $e) {
-
-            return response()->json([
-                'message' => 'Error al obtener tarea: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['message' => 'Error al obtener tarea: ' . $e->getMessage()], 500);
         }
     }
+
+
 
     public function store(CreateTareaRequest $request): JsonResponse
     {
@@ -118,9 +117,12 @@ class TareaController extends Controller
 
             $tarea->update($data);
 
+            $tareas =  Tarea::findOrFail($tarea->id);
+
             return response()->json([
                 'message' => 'Tarea actualizada correctamente',
-                'tarea' => $tarea
+                'tarea' => $tarea,
+                'tareas' => $tareas
             ], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'La tarea no existe'], 404);
@@ -172,14 +174,16 @@ class TareaController extends Controller
     {
         try {
             // Verificar si el curso existe
-            $curso = Curso::find($cursoId);
+            $curso = Curso::findOrFail($cursoId);
 
             if (!$curso) {
                 return response()->json(['message' => 'Curso no encontrado'], 404);
             }
 
             // Obtener todas las tareas del curso con las respuestas de los estudiantes
-            $tareas = Tarea::where('id_curso', $cursoId)->with("respuestas.estudiante")->get();
+            $tareas = Tarea::where('id_curso', $cursoId)
+                ->with(['respuestas.estudiante', 'respuestas.nota'])
+                ->get();
 
             // Verificar si existen tareas para ese curso
             if ($tareas->isEmpty()) {
@@ -187,7 +191,7 @@ class TareaController extends Controller
             }
 
             // Devolver las tareas y respuestas en formato JSON
-            return response()->json(['tareas' => $tareas], 200);
+            return response()->json(['tareas' => $tareas], 201);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error al obtener las tareas: ' . $e->getMessage()], 500);
         }
