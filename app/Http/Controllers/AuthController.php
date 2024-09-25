@@ -33,7 +33,7 @@ class AuthController extends Controller
         // Intentar autenticar al usuario
         if (!Auth::attempt($credenciales)) {
             // Verificar si el usuario existe
-            $usuario = User::where('email', $credenciales['email'])->first();
+            $usuario = User::where('usuario', $credenciales['usuario'])->first();
             if (!$usuario) {
                 return response()->json([
                     'errors' => ['Usuario no existe.']
