@@ -7,6 +7,7 @@ use App\Http\Requests\CreateCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\Inscripcion;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\pdf as PDF;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -274,6 +275,23 @@ class CursoController extends Controller
             return response()->json(['cursos' => $cursos]);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error al obtener los cursos: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function descargarPDF($id)
+    {
+        try {
+            $curso = Curso::with('estudiantes', 'docente')
+                ->findOrFail($id);
+
+            // Generar el PDF
+            $pdf = PDF::loadView('pdf.curso', compact('curso', ));
+
+            // Retornar el PDF como una descarga
+            return $pdf->download("curso_{$curso->titulo}.pdf");
+        } catch (Exception $e) {
+            // Manejo de errores: podrías registrar el error o lanzar una excepción
+            return response()->json(['message' => 'Error al generar el PDF: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Barryvdh\DomPDF\Facade\pdf as PDF;
 
 class TareaController extends Controller
 {
@@ -139,8 +140,6 @@ class TareaController extends Controller
         }
     }
 
-
-
     /**
      * Remove the specified resource from storage.
      */
@@ -194,6 +193,31 @@ class TareaController extends Controller
             return response()->json(['tareas' => $tareas], 201);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error al obtener las tareas: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function descargarPDF($id)
+    {
+        try {
+            $tarea = Tarea::where('id', $id)
+                ->with(['respuestas.estudiante', 'respuestas.nota'])
+                ->first();  // Cambiado a first() para obtener una sola tarea
+
+            // Verifica si la tarea existe
+            if (!$tarea) {
+                return response()->json(['message' => 'Tarea no encontrada'], 404);
+            }
+
+            Log::info($tarea);
+
+            // Generar el PDF
+            $pdf = PDF::loadView('pdf.tarea', compact('tarea'));
+
+            // Retornar el PDF como una descarga
+            return $pdf->download("tarea_{$tarea->titulo}.pdf");
+        } catch (Exception $e) {
+            // Manejo de errores
+            return response()->json(['message' => 'Error al generar el PDF: ' . $e->getMessage()], 500);
         }
     }
 }

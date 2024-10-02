@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
     Route::apiResource('/tareas', TareaController::class);
     Route::get('tareas/curso/{cursoId}', [TareaController::class, 'getTareasByCurso']);
     Route::apiResource('/respuestas', RespuestaEstudianteController::class);
+    Route::get('/tarea/{id}/descargar-pdf', [TareaController::class, 'descargarPDF']);
 
     // Rutas relacionadas con archivos y progreso de cursos
     Route::get('/archivos/{userId}/{archivoId}/visto', [ArchivoVistoController::class, 'hasViewedArchivo']);
@@ -76,6 +77,8 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
     Route::post('/usuarios/buscar', [UserController::class, "buscarUsuarios"]);
 
     // Rutas de cursos y lecciones
+    Route::get('/curso/{id}/descargar-pdf', [CursoController::class, 'descargarPDF']);
+
     Route::apiResource('/cursos', CursoController::class)->except(['index', "show"]);
     Route::get('/cursos-populares', [CursoController::class, "cursosMasPopulares"]);
     Route::get('/cursos/docente/{idDocente}', [CursoController::class, 'cursosDelDocente']);
