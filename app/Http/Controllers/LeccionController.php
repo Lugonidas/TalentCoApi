@@ -23,9 +23,7 @@ class LeccionController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $lecciones = Cache::remember('lecciones_all', 60, function () {
-                return Leccion::with("curso", "archivos")->orderBy('created_at', 'desc')->get();
-            });
+            $lecciones =  Leccion::with("curso", "archivos")->orderBy('created_at', 'desc')->get();
 
             return response()->json([
                 'lecciones' => $lecciones,
@@ -47,9 +45,7 @@ class LeccionController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            $leccion = Cache::remember("leccion_{$id}", 60, function () use ($id) {
-                return Leccion::with('curso', 'archivos')->findOrFail($id);
-            });
+            $leccion = Leccion::with('curso', 'archivos')->findOrFail($id);
 
             return response()->json([
                 'leccion' => $leccion
@@ -73,9 +69,7 @@ class LeccionController extends Controller
     public function showAllLessons($cursoId): JsonResponse
     {
         try {
-            $curso = Cache::remember("curso_{$cursoId}_with_lecciones", 60, function () use ($cursoId) {
-                return Curso::with('lecciones.archivos')->findOrFail($cursoId);
-            });
+            $curso = Curso::with('lecciones.archivos')->findOrFail($cursoId);
 
             return response()->json([
                 'curso' => $curso,
