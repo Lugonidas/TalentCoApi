@@ -26,7 +26,7 @@ class CreateCursoRequest extends FormRequest
             "fecha_inicio" => ["required", "date"],
             "fecha_fin" => ["required", "date", "after_or_equal:fecha_inicio"],
             "estado" => ["required", "boolean"],
-            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
+            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             "descripcion" => ["required", "string"],
             "duracion" => ["required", "numeric", "min:1"],
             "id_docente" => ["required", "exists:users,id"],

@@ -33,7 +33,7 @@ class UpdateCursoRequest extends FormRequest
 
         // Validar imagen solo si se proporciona una nueva
         if ($this->hasFile('imagen')) {
-            $rules['imagen'] = ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg", "max:4096"];
+            $rules['imagen'] = ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg,webp", "max:4096"];
         }
 
         return $rules;

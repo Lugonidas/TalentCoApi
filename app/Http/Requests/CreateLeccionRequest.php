@@ -35,7 +35,7 @@ class CreateLeccionRequest extends FormRequest
                     return $query->where('id_curso', $this->input('id_curso'));
                 })
             ],
-            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:4096',
+            "imagen" => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:4096',
             "id_docente" => ["nullable", "exists:users,id"],
             "id_curso" => ["nullable", "exists:cursos,id"],
         ];
