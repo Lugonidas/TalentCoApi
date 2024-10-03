@@ -14,11 +14,10 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('chat.{id}', function (User $user, $id) {
-    // Verifica si el usuario está autorizado para escuchar este canal
-    // Aquí debes asegurar que el usuario esté asociado con la conversación con el ID proporcionado
-    return $user->conversaciones()->where('id', $id)->exists();
+Broadcast::channel('chat.{id_conversacion}', function ($user, $id_conversacion) {
+    return $user->participaEnConversacion($id_conversacion);
 });
+
 
 
 

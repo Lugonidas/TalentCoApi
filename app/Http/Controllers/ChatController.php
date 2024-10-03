@@ -43,22 +43,25 @@ class ChatController extends Controller
     // Método para enviar un mensaje a una conversación
     public function enviarMensaje(Request $request, $id)
     {
+        // Validar que el mensaje esté presente y sea una cadena de texto con un máximo de 255 caracteres
         $request->validate([
             'mensaje' => 'required|string|max:255',
         ]);
 
-        $userId = Auth::id();
-        $conversacion = Conversacion::find($id);
+        $userId = Auth::id(); // Obtener el ID del usuario autenticado
+        $conversacion = Conversacion::find($id); // Buscar la conversación por ID
 
         if (!$conversacion) {
             return response()->json(['error' => 'Conversación no encontrada'], 404);
         }
 
+        // Verificar que el usuario tenga permiso para enviar mensajes en esta conversación
         if (!$conversacion->usuarios->contains($userId)) {
             return response()->json(['error' => 'No tienes permiso para enviar mensajes en esta conversación.'], 403);
         }
 
         try {
+            // Crear un nuevo mensaje
             $mensaje = Mensaje::create([
                 'mensaje' => $request->mensaje,
                 'estado' => 1,
@@ -66,18 +69,20 @@ class ChatController extends Controller
                 'id_usuario' => $userId
             ]);
 
-            // Emitir el evento
-            event(new MensajeEnviado($mensaje));
+            // Emitir el evento MensajeEnviado, pasando el mensaje y el usuario autenticado
+            event(new MensajeEnviado($mensaje, Auth::user()));
 
             // Log para verificar que el evento se emite
             Log::info('Evento MensajeEnviado emitido', ['mensaje' => $mensaje, 'conversacion' => $conversacion]);
 
+            // Retornar la respuesta JSON con el mensaje creado
             return response()->json(['mensaje' => $mensaje]);
         } catch (\Exception $e) {
             Log::error('Error al enviar el mensaje: ' . $e->getMessage());
             return response()->json(['error' => 'Error al enviar el mensaje', 'details' => $e->getMessage()], 500);
         }
     }
+
 
     // ChatController.php
     public function usuariosPorCursos()
@@ -104,35 +109,44 @@ class ChatController extends Controller
     }
 
     // Método para verificar o crear una conversación
-    public function obtenerOCrearConversacion(Request $request, $id)
+    public function obtenerOCrearConversacion($id)
     {
-        // Verificar si ya existe una conversación entre el usuario autenticado y el otro usuario
+        // ID del usuario autenticado
         $idUsuarioAutenticado = Auth::id();
 
-        $conversacion = Conversacion::whereHas('participantes', function ($query) use ($idUsuarioAutenticado, $id) {
-            $query->where('id_usuario', $idUsuarioAutenticado)
-                ->orWhere('id_usuario', $id);
-        })->first();
+        // Verificar si existe una conversación entre el usuario autenticado y el otro usuario
+        $conversacion = Conversacion::whereHas('participantes', function ($query) use ($idUsuarioAutenticado) {
+            $query->where('id_usuario', $idUsuarioAutenticado);
+        })
+            ->whereHas('participantes', function ($query) use ($id) {
+                $query->where('id_usuario', $id);
+            })
+            ->first();
 
+        // Si no existe una conversación, crearla
         if (!$conversacion) {
             $conversacion = new Conversacion();
             $conversacion->estado = 1;
             $conversacion->id_tipo_conversacion = 1;
             $conversacion->save();
 
+            // Añadir al usuario autenticado como participante
             ParticipantesConversacion::create([
                 'id_conversacion' => $conversacion->id,
                 'id_usuario' => $idUsuarioAutenticado,
             ]);
 
+            // Añadir al otro usuario como participante
             ParticipantesConversacion::create([
                 'id_conversacion' => $conversacion->id,
                 'id_usuario' => $id,
             ]);
         }
 
+        // Cargar los mensajes y los participantes de la conversación
         $conversacion->load('mensajes.usuario', 'participantes.user');
 
+        // Retornar la conversación en formato JSON
         return response()->json([
             'conversacion' => $conversacion
         ]);

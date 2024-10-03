@@ -6,6 +6,7 @@ use App\Http\Requests\CreateUserRequest;
 use App\Http\Requests\UpdatePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Mail\RegistroUsuarioMailable;
 use App\Models\User;
 use App\Models\Rol;
 use Exception;
@@ -15,6 +16,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -105,6 +107,14 @@ class UserController extends Controller
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
+
+            // Construir la URL de verificación usando la URL del frontend
+            $frontendUrl = config('app.frontend_url');
+            $verificationUrl = "{$frontendUrl}/verify/{$usuario->id}/" . sha1($usuario->email);
+    
+            // Enviar el correo de bienvenida con la URL del frontend
+            Mail::to($usuario->email)->send(new RegistroUsuarioMailable($usuario, $verificationUrl));
+
 
             return response()->json([
                 'message' => 'Usuario registrado correctamente. Por favor, verifica tu correo.',
