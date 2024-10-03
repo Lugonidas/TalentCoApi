@@ -7,7 +7,7 @@ use App\Http\Requests\CreateCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\Inscripcion;
 use App\Models\User;
-use Barryvdh\DomPDF\Facade\pdf as PDF;
+use PDF;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;

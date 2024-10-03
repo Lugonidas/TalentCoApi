@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Barryvdh\DomPDF\Facade\pdf as PDF;
+use PDF;
 
 class TareaController extends Controller
 {
