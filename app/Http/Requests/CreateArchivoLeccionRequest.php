@@ -25,7 +25,7 @@ class CreateArchivoLeccionRequest extends FormRequest
             'nombre' => 'required|string',
             'id_leccion' => 'required|exists:lecciones,id',
             'tipo' => 'required|string',
-            'ubicacion' => 'required|file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,flv,pdf|max:51200',
+            'ubicacion' => 'required|file|mimes:jpeg,png,jpg,gif,svg,mp4,mov,avi,flv,mkv,pdf|max:51200',
         ];
     }
 
