@@ -83,7 +83,7 @@ class UserController extends Controller
         try {
             $data = $request->validated();
 
-            // Verificar si se subió una imagen
+            /* // Verificar si se subió una imagen
             if ($request->hasFile('imagen')) {
                 // Almacenar la imagen en la carpeta 'imagenes' del almacenamiento público
                 $path = $request->file('imagen')->store('imagenes', 'public');
@@ -91,7 +91,7 @@ class UserController extends Controller
             } else {
                 // Asignar una imagen por defecto si no se subió ninguna
                 $data['imagen'] = 'imagenes/avatar.png'; // Ruta de la imagen por defecto
-            }
+            } */
 
             // Crear un nuevo usuario con los datos proporcionados
             $usuario = User::create([
@@ -103,7 +103,7 @@ class UserController extends Controller
                 'direccion' => $data['direccion'],
                 'id_tipo_documento' => $data['id_tipo_documento'],
                 'id_rol' => $data['id_rol'],
-                'imagen' => $data['imagen'], // Imagen ya sea subida o por defecto
+                'imagen' => "https://w7.pngwing.com/pngs/178/595/png-transparent-user-profile-computer-icons-login-user-avatars-thumbnail.png", // Imagen ya sea subida o por defecto
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
             ]);
@@ -111,7 +111,7 @@ class UserController extends Controller
             // Construir la URL de verificación usando la URL del frontend
             $frontendUrl = config('app.frontend_url');
             $verificationUrl = "{$frontendUrl}/verify/{$usuario->id}/" . sha1($usuario->email);
-    
+
             // Enviar el correo de bienvenida con la URL del frontend
             Mail::to($usuario->email)->send(new RegistroUsuarioMailable($usuario, $verificationUrl));
 

@@ -6,6 +6,7 @@ use App\Models\Curso;
 use App\Http\Requests\CreateCursoRequest;
 use App\Http\Requests\UpdateCursoRequest;
 use App\Models\Inscripcion;
+use App\Models\Tarea;
 use App\Models\User;
 use PDF;
 use Exception;
@@ -26,18 +27,17 @@ class CursoController extends Controller
     public function index(): JsonResponse
     {
         try {
-            $cursos = Cache::remember('cursos_all', 60, function () {
-                return Curso::with([
-                    'comentarios',
-                    'comentarios.user',
-                    'docente',
-                    'lecciones' => function ($query) {
-                        $query->orderBy('orden', 'desc');
-                    },
-                    'categoria',
-                    'estudiantes'
-                ])->orderBy('created_at', 'desc')->get();
-            });
+            $cursos = Curso::with([
+                'comentarios',
+                'comentarios.user',
+                'docente',
+                'lecciones' => function ($query) {
+                    $query->orderBy('orden', 'desc');
+                },
+                'categoria',
+                'estudiantes'
+            ])->orderBy('created_at', 'desc')->get();
+
 
             return response()->json(['cursos' => $cursos]);
         } catch (Exception $e) {
@@ -83,10 +83,10 @@ class CursoController extends Controller
             $data = $request->validated();
 
             // Manejar la carga de la imagen
-            if ($request->hasFile('imagen')) {
+            /*             if ($request->hasFile('imagen')) {
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
-            }
+            } */
 
             // Crear un nuevo curso con los datos proporcionados
             $curso = Curso::create([
@@ -137,7 +137,7 @@ class CursoController extends Controller
             // Obtener los datos validados
             $data = $request->validated();
 
-            // Manejar la imagen si se proporciona
+            /* // Manejar la imagen si se proporciona
             if ($request->hasFile('imagen')) {
                 // Validar la imagen (si no está validada en UpdateCursoRequest)
                 $request->validate([
@@ -152,7 +152,7 @@ class CursoController extends Controller
                 // Guardar la nueva imagen
                 $path = $request->file('imagen')->store('imagenes', 'public');
                 $data['imagen'] = $path;
-            }
+            } */
 
             // Actualizar el curso con los datos nuevos
             $curso->update($data);
@@ -284,8 +284,10 @@ class CursoController extends Controller
             $curso = Curso::with('estudiantes', 'docente')
                 ->findOrFail($id);
 
+            $tareas = Tarea::with(['respuestas.estudiante', 'respuestas.nota'])->get();
+
             // Generar el PDF
-            $pdf = PDF::loadView('pdf.curso', compact('curso', ));
+            $pdf = PDF::loadView('pdf.curso', compact('curso', "tareas"));
 
             // Retornar el PDF como una descarga
             return $pdf->download("curso_{$curso->titulo}.pdf");

@@ -36,7 +36,6 @@ class RespuestaEstudiante extends Model
     public function nota()
     {
         return $this->hasOne(NotasEstudiantes::class, 'id_estudiante', 'id_estudiante')
-                    ->whereColumn('id_evaluacion', 'id_evaluacion'); 
+            ->whereColumn('id_evaluacion', 'id_evaluacion');
     }
-    
 }

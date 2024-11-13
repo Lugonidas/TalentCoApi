@@ -38,7 +38,7 @@ class UpdateUserRequest extends FormRequest
             "fecha_nacimiento" => ["required", "date"],
             "direccion" => ["required", "string"],
             "id_tipo_documento" => ["required", "exists:tipo_documentos,id"],
-            "imagen" => ["required", "string"],
+            "imagen" => ["required", "url"],
         ];
     }
 
@@ -60,6 +60,7 @@ class UpdateUserRequest extends FormRequest
             'id_tipo_documento.required' => 'El tipo de documento es obligatorio.',
             'id_tipo_documento.exists' => 'El tipo de documento seleccionado no es válido.',
             'imagen.required' => 'La imagen es obligatoria.',
+            'imagen.url' => 'La URL proporcionada no es válida. Asegúrate de que sea una URL completa.',
         ];
     }
 }

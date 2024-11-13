@@ -66,6 +66,7 @@ Route::middleware('auth:sanctum', 'verified')->group(function () {
     Route::get('/archivos/vistos', [ArchivoVistoController::class, 'archivosVistos']);
     Route::get('/lecciones/{id}/progreso', [ArchivoVistoController::class, 'progresoLeccion']);
     Route::get('/cursos/{id}/progreso', [ArchivoVistoController::class, 'progresoCurso']);
+    Route::get('/cursos/{id}/progreso-estudiantes', [ArchivoVistoController::class, 'progresoCursoTodosLosEstudiantes']);
 
     // Rutas de autenticación
     Route::post('/logout', [AuthController::class, 'logout']);

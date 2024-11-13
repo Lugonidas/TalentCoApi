@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\ArchivoLeccion;
 use App\Models\ArchivoVisto;
+use App\Models\Curso;
 use App\Models\Leccion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ArchivoVistoController extends Controller
 {
@@ -93,6 +95,81 @@ class ArchivoVistoController extends Controller
 
         return response()->json(['progreso' => $progreso], 200);
     }
+
+    public function progresoCursoTodosLosEstudiantes($idCurso)
+    {
+        Log::info("Progreso de estudiante");
+        // Obtener todos los estudiantes que están inscritos en el curso
+        $curso = Curso::with('estudiantes')->find($idCurso);
+        
+        
+        if (!$curso) {
+            return response()->json(['message' => 'Curso no encontrado.'], 404);
+        }
+
+        // Inicializar el array para almacenar el progreso de cada estudiante
+        $progresoEstudiantes = [];
+
+        // Iterar sobre todos los estudiantes del curso
+        foreach ($curso->estudiantes as $estudiante) {
+            // Calcular el progreso del curso para este estudiante
+            $progreso = $this->progresoCursoPorEstudiante($idCurso, $estudiante->id);
+            // Depuración
+            Log::info("Progreso de estudiante {$estudiante->id}: {$progreso['progreso']}");
+
+            // Almacenar el progreso junto con la información del estudiante
+            $progresoEstudiantes[] = [
+                'estudiante_id' => $estudiante->id,
+                'nombre' => $estudiante->name,
+                'progreso' => $progreso['progreso'],
+            ];
+        }
+
+        return response()->json(['progreso_estudiantes' => $progresoEstudiantes], 200);
+    }
+
+    public function progresoCursoPorEstudiante($idCurso, $idEstudiante)
+    {
+        $usuarioId = $idEstudiante;
+
+        // Obtener todas las lecciones del curso
+        $lecciones = Leccion::where('id_curso', $idCurso)->get();
+        $totalLecciones = $lecciones->count();
+
+        if ($totalLecciones === 0) {
+            return response()->json(['progreso' => 0], 200);
+        }
+
+        // Contar cuántas lecciones tienen al menos un archivo visto
+        $leccionesConArchivosVistos = 0;
+
+        foreach ($lecciones as $leccion) {
+            $archivos = ArchivoLeccion::where('id_leccion', $leccion->id)->get();
+            $totalArchivos = $archivos->count();
+
+            if ($totalArchivos === 0) {
+                continue;
+            }
+
+            $archivosVistos = ArchivoVisto::where('id_usuario', $usuarioId)
+                ->whereIn('id_archivo', $archivos->pluck('id'))
+                ->count();
+
+            // Depuración
+            Log::info("Archivos vistos para usuario {$usuarioId}: {$archivosVistos}");
+
+            if ($archivosVistos > 0) {
+                $leccionesConArchivosVistos++;
+            }
+        }
+
+        $progreso = ($leccionesConArchivosVistos / $totalLecciones) * 100;
+
+        return ['progreso' => $progreso];
+    }
+
+
+
 
     public function hasViewedArchivo($userId, $archivoId)
     {

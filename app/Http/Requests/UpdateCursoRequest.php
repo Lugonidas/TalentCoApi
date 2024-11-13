@@ -21,22 +21,16 @@ class UpdateCursoRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
+        return [
             "titulo" => ["required", "string", "max:255"],
+            "imagen" => ["required", "url"],
             "fecha_inicio" => ["required", "date"],
             "fecha_fin" => ["required", "date", "after_or_equal:fecha_inicio"],
             "estado" => ["required", "boolean"],
             "descripcion" => ["required", "string"],
             "duracion" => ["required", "numeric", "min:1"],
             "id_categoria" => ["required", "exists:categorias,id"],
-        ];
-
-        // Validar imagen solo si se proporciona una nueva
-        if ($this->hasFile('imagen')) {
-            $rules['imagen'] = ["nullable", "image", "mimes:jpeg,png,jpg,gif,svg,webp", "max:4096"];
-        }
-
-        return $rules;
+        ];;
     }
 
     /**

@@ -22,6 +22,10 @@
             line-height: 1.5;
         }
 
+        ul {
+            list-style: none;
+        }
+
         .estudiantes {
             margin-top: 30px;
             border-collapse: collapse;
@@ -46,10 +50,29 @@
             font-size: 12px;
             color: #999;
         }
+
+        .tareas {
+            margin-top: 30px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tareas th,
+        .tareas td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .tareas th {
+            background-color: #007bff;
+            color: white;
+        }
     </style>
 </head>
 
 <body>
+
     <h1>{{ $curso->titulo }}</h1>
     <p><strong>Descripción:</strong> {{ $curso->descripcion }}</p>
     <p><strong>Duración:</strong> {{ $curso->duracion }} horas</p>
@@ -61,7 +84,7 @@
         <table class="estudiantes">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>Cédula</th>
                     <th>Nombre Completo</th>
                     <th>Email</th>
                 </tr>
@@ -69,7 +92,7 @@
             <tbody>
                 @foreach ($curso->estudiantes as $estudiante)
                     <tr>
-                        <td>{{ $estudiante->id }}</td>
+                        <td>{{ $estudiante->numero_documento }}</td>
                         <td>{{ $estudiante->name }} {{ $estudiante->apellido }}</td>
                         <td>{{ $estudiante->email }}</td>
                     </tr>
@@ -79,6 +102,7 @@
     @else
         <p>No hay estudiantes inscritos en este curso.</p>
     @endif
+
 
     <div class="footer">
         <p>Generado por {{ config('app.name') }}</p>

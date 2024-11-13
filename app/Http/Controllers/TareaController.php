@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateTareaRequest;
 use App\Http\Requests\UpdateTareaRequest;
 use App\Models\Curso;
+use App\Models\NotasEstudiantes;
 use App\Models\Tarea;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -199,9 +200,9 @@ class TareaController extends Controller
     public function descargarPDF($id)
     {
         try {
-            $tarea = Tarea::where('id', $id)
-                ->with(['respuestas.estudiante', 'respuestas.nota'])
-                ->first();  // Cambiado a first() para obtener una sola tarea
+            $tarea = Tarea::with(['respuestas.estudiante', 'respuestas.nota' => function ($query) use ($id) {
+                $query->where('id_evaluacion', $id); // Aquí filtras por la evaluación correspondiente
+            }])->findOrFail($id);
 
             // Verifica si la tarea existe
             if (!$tarea) {
